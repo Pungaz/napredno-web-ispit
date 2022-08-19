@@ -1,0 +1,16 @@
+version: "3"
+services:
+  pg-web:
+    image: "postgres"
+    environment:
+      - POSTGRES_USER=web
+      - POSTGRES_PASSWORD=web!
+      - POSTGRES_DB=web
+    ports:
+      - "54321:5432"
+    volumes:
+      - pg-web-ispit:/var/lib/postgresql/data
+
+volumes: 
+  pg-web-ispit:
+    external: true
