@@ -7,5 +7,5 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 public class LoginResponse {
-    private String jwt;
+    String jwt;
 }
