@@ -1,18 +1,14 @@
 package rs.edu.raf.nwp.ispit.Controller;
 
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import rs.edu.raf.nwp.ispit.dto.UserDto;
 import rs.edu.raf.nwp.ispit.entity.User;
 import rs.edu.raf.nwp.ispit.service.UserService;
 
-import javax.annotation.security.RolesAllowed;
 import javax.validation.Valid;
 
 @RestController
@@ -34,7 +30,7 @@ public class UserController {
 
     @PreAuthorize("hasAuthority('can_create_users')")
     @GetMapping(value = "/sta")
-    public String getString(){
+    public String getString() {
         return "Dobio si string";
     }
 

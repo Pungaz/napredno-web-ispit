@@ -5,9 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class IspitApplication {
-
-	public static void main(String[] args) {
-		SpringApplication.run(IspitApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(IspitApplication.class, args);
+    }
 }

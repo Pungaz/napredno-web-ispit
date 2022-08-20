@@ -2,6 +2,7 @@ package rs.edu.raf.nwp.ispit.filter;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -40,7 +41,6 @@ public class JwtFilter extends OncePerRequestFilter {
             jwt = authHeader.substring(7);
             username = jwtUtil.extractUsername(jwt);
         }
-
         if (username != null) {
 
             UserDetails userDetails = userService.loadUserByUsername(username);

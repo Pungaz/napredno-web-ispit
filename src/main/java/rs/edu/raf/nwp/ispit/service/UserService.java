@@ -21,7 +21,10 @@ import rs.edu.raf.nwp.ispit.repository.PermissionRepository;
 import rs.edu.raf.nwp.ispit.repository.UserPermissionRepository;
 import rs.edu.raf.nwp.ispit.repository.UserRepository;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Data
 @Service
@@ -93,7 +96,6 @@ public class UserService implements UserDetailsService {
         User user = userRepository.findUserByUsername(username);
 
         List<UserPermission> userPermissions = userPermissionRepository.findUserPermissionsByUser(user);
-
 
         return userPermissions.stream().map(UserPermission::getPermission).toList();
     }

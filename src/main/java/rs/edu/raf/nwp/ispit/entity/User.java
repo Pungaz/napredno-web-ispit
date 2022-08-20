@@ -44,7 +44,6 @@ public class User {
     private String address;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY,
-            cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<UserPermission> userPermissions;
 }
