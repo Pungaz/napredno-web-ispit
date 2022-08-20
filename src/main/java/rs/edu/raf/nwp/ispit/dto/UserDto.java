@@ -1,5 +1,6 @@
 package rs.edu.raf.nwp.ispit.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import java.util.List;
 public class UserDto {
 
     @NotBlank(message = "Password is mandatory")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @NotBlank(message = "Username is mandatory")

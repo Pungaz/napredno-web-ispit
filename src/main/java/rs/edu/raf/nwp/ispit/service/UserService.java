@@ -37,11 +37,8 @@ public class UserService implements UserDetailsService {
         if (myUser == null) {
             throw new UsernameNotFoundException("User name " + username + " not found");
         }
-
         return new org.springframework.security.core.userdetails.User(myUser.getUsername(), myUser.getPassword(), findPermissionsByUsername(username));
     }
-// TODO add valid user permissions to row 43
-
 
     @Transactional
     public ResponseEntity<?> create(UserDto userDTO) {
@@ -69,11 +66,13 @@ public class UserService implements UserDetailsService {
 
             userRepository.save(user);
 
-            for (Permission permissionName : existingPermissions) {
+            for (Permission permission : existingPermissions) {
                 userPermissionRepository.save(
                         UserPermission.builder()
                                 .user(user)
-                                .permission(permissionName)
+                                .permission(permission)
+                                .permissionName(permission.getName())
+                                .username(user.getUsername())
                                 .build());
             }
 

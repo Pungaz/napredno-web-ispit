@@ -18,6 +18,7 @@ import rs.edu.raf.nwp.ispit.service.UserService;
 @EnableWebSecurity
 @EnableScheduling
 @EnableAsync
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final UserService userService;
@@ -44,7 +45,6 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                 .disable()
                 .authorizeRequests()
                 .antMatchers("/user/create").permitAll()
-                .antMatchers("/user/sta").hasAuthority("can_create_users")
                 .antMatchers("/auth/login").permitAll()
                 .anyRequest().authenticated()
                 .and().sessionManagement()

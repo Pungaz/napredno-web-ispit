@@ -22,7 +22,7 @@ import javax.validation.Valid;
 public class UserController {
     private final UserService userService;
 
-    @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/create")
     public ResponseEntity<?> create(@Valid @RequestBody UserDto userDTO) {
         return this.userService.create(userDTO);
     }
@@ -32,7 +32,8 @@ public class UserController {
         return this.userService.paginate(page, size);
     }
 
-    @GetMapping(value = "/sta", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAuthority('can_create_users')")
+    @GetMapping(value = "/sta")
     public String getString(){
         return "Dobio si string";
     }
