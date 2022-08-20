@@ -15,7 +15,7 @@ import rs.edu.raf.nwp.ispit.service.UserService;
 import javax.annotation.security.RolesAllowed;
 import javax.validation.Valid;
 
-@Controller
+@RestController
 @RequestMapping("/user")
 @CrossOrigin
 @AllArgsConstructor
@@ -32,9 +32,8 @@ public class UserController {
         return this.userService.paginate(page, size);
     }
 
-    @GetMapping(value = "/sta")
+    @GetMapping(value = "/sta", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getString(){
-        System.out.println("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
         return "Dobio si string";
     }
 

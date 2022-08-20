@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,10 +21,7 @@ import rs.edu.raf.nwp.ispit.repository.PermissionRepository;
 import rs.edu.raf.nwp.ispit.repository.UserPermissionRepository;
 import rs.edu.raf.nwp.ispit.repository.UserRepository;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Data
 @Service
@@ -40,8 +38,10 @@ public class UserService implements UserDetailsService {
             throw new UsernameNotFoundException("User name " + username + " not found");
         }
 
-        return new org.springframework.security.core.userdetails.User(myUser.getUsername(), myUser.getPassword(), new ArrayList<>());
+        return new org.springframework.security.core.userdetails.User(myUser.getUsername(), myUser.getPassword(), findPermissionsByUsername(username));
     }
+// TODO add valid user permissions to row 43
+
 
     @Transactional
     public ResponseEntity<?> create(UserDto userDTO) {
@@ -90,15 +90,13 @@ public class UserService implements UserDetailsService {
         return this.userRepository.findUserByUsername(username);
     }
 
-    public List<String> findPermissionsByUsername(String username) {
+    public Collection<? extends GrantedAuthority> findPermissionsByUsername(String username) {
         User user = userRepository.findUserByUsername(username);
 
         List<UserPermission> userPermissions = userPermissionRepository.findUserPermissionsByUser(user);
-        List<Permission> permissions = userPermissions.stream().map(UserPermission::getPermission).toList();
 
-        System.out.println(permissions.stream().map(Permission::getName).toList());
 
-        return permissions.stream().map(Permission::getName).toList();
+        return userPermissions.stream().map(UserPermission::getPermission).toList();
     }
 
 }

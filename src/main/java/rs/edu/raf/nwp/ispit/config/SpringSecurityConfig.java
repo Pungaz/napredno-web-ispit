@@ -44,7 +44,7 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                 .disable()
                 .authorizeRequests()
                 .antMatchers("/user/create").permitAll()
-                .antMatchers("/user/sta").hasRole("can_create_users")
+                .antMatchers("/user/sta").hasAuthority("can_create_users")
                 .antMatchers("/auth/login").permitAll()
                 .anyRequest().authenticated()
                 .and().sessionManagement()
