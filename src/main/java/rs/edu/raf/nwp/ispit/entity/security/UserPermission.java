@@ -24,10 +24,10 @@ public class UserPermission {
     @JoinColumn(name = "permission_id", nullable = false)
     private Permission permission;
 
-    @Column
+    @Column(name = "username")
     private String username;
 
-    @Column
+    @Column(name = "permission_name")
     private String permissionName;
 
 }
