@@ -17,6 +17,8 @@ import rs.edu.raf.nwp.ispit.dto.UserDto;
 import rs.edu.raf.nwp.ispit.entity.User;
 import rs.edu.raf.nwp.ispit.entity.security.Permission;
 import rs.edu.raf.nwp.ispit.entity.security.UserPermission;
+import rs.edu.raf.nwp.ispit.exception.PermissionNotExistException;
+import rs.edu.raf.nwp.ispit.exception.UsernameAlreadyExistException;
 import rs.edu.raf.nwp.ispit.repository.PermissionRepository;
 import rs.edu.raf.nwp.ispit.repository.UserPermissionRepository;
 import rs.edu.raf.nwp.ispit.repository.UserRepository;
@@ -44,8 +46,7 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public ResponseEntity<?> create(UserDto userDTO) {
-
+    public ResponseEntity<User> create(UserDto userDTO) {
         if (!userRepository.existsByUsername(userDTO.getUsername())) {
             List<Long> userDtoPermissions = userDTO.getPermissions();
             Set<Long> userDtoPermissionsSet = new HashSet<>(userDtoPermissions);
@@ -56,7 +57,7 @@ public class UserService implements UserDetailsService {
                     existingPermissions.stream().map(Permission::getName).toList();
 
             if (userDtoPermissionsSet.size() != existingPermissionsFromUserDtoString.size()) {
-                return ResponseEntity.status(400).body("Invalid permission sent");
+                throw new PermissionNotExistException();
             }
 
             User user = User.builder()
@@ -78,10 +79,9 @@ public class UserService implements UserDetailsService {
                                 .username(user.getUsername())
                                 .build());
             }
-
-            return ResponseEntity.status(200).body(user);
+            return ResponseEntity.ok(user);
         }
-        return ResponseEntity.status(500).body("Username already exists");
+        throw new UsernameAlreadyExistException();
     }
 
     public Page<User> paginate(Integer page, Integer size) {

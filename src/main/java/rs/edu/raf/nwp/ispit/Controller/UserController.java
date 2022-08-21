@@ -19,11 +19,17 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping(value = "/create")
-    public ResponseEntity<?> create(@Valid @RequestBody UserDto userDTO) {
+    @PreAuthorize("hasAuthority('can_create_users')")
+    public ResponseEntity<User> create(@Valid @RequestBody UserDto userDTO) {
+            return this.userService.create(userDTO);
+    }
+
+    @PostMapping(value = "/update")
+    public ResponseEntity<User> update(@Valid @RequestBody UserDto userDTO) {
         return this.userService.create(userDTO);
     }
 
-    @GetMapping
+    @GetMapping(value = "/all")
     public Page<User> all(@RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size) {
         return this.userService.paginate(page, size);
     }
