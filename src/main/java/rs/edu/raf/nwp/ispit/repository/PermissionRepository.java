@@ -9,5 +9,4 @@ import java.util.List;
 @Repository
 public interface PermissionRepository extends CrudRepository<Permission, Long> {
     List<Permission> findByIdIn(List<Long> ids);
-
 }

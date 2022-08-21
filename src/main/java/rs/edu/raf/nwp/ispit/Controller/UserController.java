@@ -21,47 +21,26 @@ public class UserController {
     @PostMapping(value = "/create")
     @PreAuthorize("hasAuthority('can_create_users')")
     public ResponseEntity<User> create(@Valid @RequestBody UserDto userDTO) {
-            return this.userService.create(userDTO);
-    }
-
-    @PostMapping(value = "/update")
-    public ResponseEntity<User> update(@Valid @RequestBody UserDto userDTO) {
         return this.userService.create(userDTO);
     }
 
-    @GetMapping(value = "/all")
-    public Page<User> all(@RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size) {
-        return this.userService.paginate(page, size);
+    @GetMapping(value = "/read")
+    @PreAuthorize("hasAuthority('can_read_users')")
+    public Page<User> read(@RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size) {
+        return this.userService.read(page, size);
     }
 
-    @PreAuthorize("hasAuthority('can_create_users')")
-    @GetMapping(value = "/sta")
-    public String getString() {
-        return "Dobio si string";
+    @PostMapping(value = "/update/{userBeingUpdatedId}")
+    @PreAuthorize("hasAuthority('can_update_users')")
+    public ResponseEntity<User> update(@Valid @RequestBody UserDto userDTO, @PathVariable long userBeingUpdatedId) {
+        return userService.update(userDTO, userBeingUpdatedId);
     }
 
-
-//    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-//    public User create(@Valid @RequestBody User user) {
-//        return this.userService.create(user);
-//    }
-
-//    @GetMapping
-//    public Page<User> all(@RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size) {
-//        return this.userService.paginate(page, size);
-//    }
-//
-//    @GetMapping(value = "/me", produces = MediaType.APPLICATION_JSON_VALUE)
-//    public User me() {
-//        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-//        return this.userService.findByemail(email);
-//    }
-//
-//    @PostMapping(value = "/hire", produces = MediaType.APPLICATION_JSON_VALUE)
-//    public User hire(@RequestParam("salary") Integer salary) {
-//        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-//        return this.userService.hire(email, salary);
-//    }
-//
+    @PostMapping(value = "/delete/{userId}")
+    @PreAuthorize("hasAuthority('can_delete_users')")
+    public ResponseEntity<?> delete(@PathVariable long userId) {
+        userService.delete(userId);
+        return ResponseEntity.ok("User deleted successfully");
+    }
 
 }

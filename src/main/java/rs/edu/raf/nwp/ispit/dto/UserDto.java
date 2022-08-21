@@ -27,6 +27,5 @@ public class UserDto {
 
     private String address;
 
-    @NotEmpty(message = "At least on permission is mandatory")
     private List<Long> permissions;
 }

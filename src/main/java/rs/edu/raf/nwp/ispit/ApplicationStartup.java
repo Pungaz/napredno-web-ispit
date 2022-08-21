@@ -1,22 +1,28 @@
 package rs.edu.raf.nwp.ispit;
 
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import rs.edu.raf.nwp.ispit.entity.User;
 import rs.edu.raf.nwp.ispit.entity.security.Permission;
+import rs.edu.raf.nwp.ispit.entity.security.UserPermission;
 import rs.edu.raf.nwp.ispit.repository.PermissionRepository;
+import rs.edu.raf.nwp.ispit.repository.UserPermissionRepository;
+import rs.edu.raf.nwp.ispit.repository.UserRepository;
+
+import java.util.ArrayList;
 
 @Component
+@AllArgsConstructor
 public class ApplicationStartup implements ApplicationListener<ApplicationReadyEvent> {
 
     private final PermissionRepository permissionRepository;
-
-    @Autowired
-    public ApplicationStartup(PermissionRepository permissionRepository) {
-        this.permissionRepository = permissionRepository;
-    }
+    private final UserRepository userRepository;
+    private final UserPermissionRepository userPermissionRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * This event is executed as late as conceivably possible to indicate that
@@ -41,5 +47,27 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
                 .name("can_delete_users")
                 .build());
 
+
+        ArrayList<Permission> permissions = (ArrayList<Permission>) permissionRepository.findAll();
+
+        User user = User.builder()
+                .username("Ja")
+                .password(passwordEncoder.encode("Neki"))
+                .firstName("Ime")
+                .lastName("Prezime")
+                .address("Neki br 1")
+                .build();
+
+        userRepository.save(user);
+
+        for (Permission permission : permissions) {
+            userPermissionRepository.save(
+                    UserPermission.builder()
+                            .user(user)
+                            .permission(permission)
+                            .permissionName(permission.getName())
+                            .username(user.getUsername())
+                            .build());
+        }
     }
 }

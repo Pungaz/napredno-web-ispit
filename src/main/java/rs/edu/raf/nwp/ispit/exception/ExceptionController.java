@@ -23,5 +23,10 @@ public class ExceptionController {
         return new ResponseEntity<>("Username already exist" , HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(value = UserNotExistException.class)
+    public ResponseEntity<Object> exception(UserNotExistException exception) {
+        return new ResponseEntity<>("User doesn't exist" , HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
 
 }

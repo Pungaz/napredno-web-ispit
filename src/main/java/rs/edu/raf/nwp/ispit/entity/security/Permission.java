@@ -1,5 +1,6 @@
 package rs.edu.raf.nwp.ispit.entity.security;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
+import java.util.Set;
 
 @Entity
 @Data
@@ -23,6 +25,10 @@ public class Permission implements GrantedAuthority {
     @Column(name = "name", nullable = false)
     @NotBlank(message = "Permission name is mandatory")
     private String name;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @OneToMany(mappedBy = "permission", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    Set<UserPermission> userPermissions;
 
     @Override
     public String getAuthority() {

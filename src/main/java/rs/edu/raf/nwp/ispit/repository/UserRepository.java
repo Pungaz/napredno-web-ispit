@@ -6,10 +6,14 @@ import rs.edu.raf.nwp.ispit.entity.User;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-
     User findUserByUsername(String username);
 
+    User findUserById(long id);
+
     boolean existsByUsername(String username);
+
+    boolean existsById(long id);
+
 
 
 //    @Modifying

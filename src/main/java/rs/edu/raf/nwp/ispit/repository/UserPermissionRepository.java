@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface UserPermissionRepository extends PagingAndSortingRepository<UserPermission, Long> {
     List<UserPermission> findUserPermissionsByUser(User user);
+
+    void deleteAllByUserId(Long userId);
 }

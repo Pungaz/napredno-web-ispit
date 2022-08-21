@@ -1,18 +1,15 @@
 package rs.edu.raf.nwp.ispit.entity.security;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import rs.edu.raf.nwp.ispit.entity.User;
 
 import javax.persistence.*;
 
 @Entity
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Getter
 public class UserPermission {
 
     @Id

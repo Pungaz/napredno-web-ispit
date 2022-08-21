@@ -18,6 +18,7 @@ import rs.edu.raf.nwp.ispit.entity.User;
 import rs.edu.raf.nwp.ispit.entity.security.Permission;
 import rs.edu.raf.nwp.ispit.entity.security.UserPermission;
 import rs.edu.raf.nwp.ispit.exception.PermissionNotExistException;
+import rs.edu.raf.nwp.ispit.exception.UserNotExistException;
 import rs.edu.raf.nwp.ispit.exception.UsernameAlreadyExistException;
 import rs.edu.raf.nwp.ispit.repository.PermissionRepository;
 import rs.edu.raf.nwp.ispit.repository.UserPermissionRepository;
@@ -38,7 +39,7 @@ public class UserService implements UserDetailsService {
     private final PermissionRepository permissionRepository;
 
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User myUser = this.findByUsername(username);
+        User myUser = userRepository.findUserByUsername(username);
         if (myUser == null) {
             throw new UsernameNotFoundException("User name " + username + " not found");
         }
@@ -46,26 +47,17 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public ResponseEntity<User> create(UserDto userDTO) {
-        if (!userRepository.existsByUsername(userDTO.getUsername())) {
-            List<Long> userDtoPermissions = userDTO.getPermissions();
-            Set<Long> userDtoPermissionsSet = new HashSet<>(userDtoPermissions);
-
-            List<Permission> existingPermissions = permissionRepository.findByIdIn(userDTO.getPermissions());
-
-            List<String> existingPermissionsFromUserDtoString =
-                    existingPermissions.stream().map(Permission::getName).toList();
-
-            if (userDtoPermissionsSet.size() != existingPermissionsFromUserDtoString.size()) {
-                throw new PermissionNotExistException();
-            }
+    public ResponseEntity<User> create(UserDto userDto) {
+        if (!userRepository.existsByUsername(userDto.getUsername())) {
+            List<Permission> existingPermissions = validatePermissions(userDto);
 
             User user = User.builder()
-                    .username(userDTO.getUsername())
-                    .password(passwordEncoder.encode(userDTO.getPassword()))
-                    .firstName(userDTO.getFirstName())
-                    .lastName(userDTO.getLastName())
-                    .address(userDTO.getAddress())
+                    .username(userDto.getUsername())
+                    .password(passwordEncoder.encode(userDto.getPassword()))
+                    .firstName(userDto.getFirstName())
+                    .lastName(userDto.getLastName())
+                    .address(userDto.getAddress())
+                    .userPermissions(null)
                     .build();
 
             userRepository.save(user);
@@ -84,12 +76,66 @@ public class UserService implements UserDetailsService {
         throw new UsernameAlreadyExistException();
     }
 
-    public Page<User> paginate(Integer page, Integer size) {
+    public Page<User> read(Integer page, Integer size) {
         return this.userRepository.findAll(PageRequest.of(page, size, Sort.by("username").descending()));
     }
 
-    public User findByUsername(String username) {
-        return this.userRepository.findUserByUsername(username);
+    @Transactional
+    public ResponseEntity<User> update(UserDto userDto, long userBeingUpdatedId) {
+        if (!userRepository.existsByUsername(userDto.getUsername())) {
+            if (userRepository.existsById(userBeingUpdatedId)) {
+                List<Permission> existingPermissions = validatePermissions(userDto);
+
+                User user = userRepository.findUserById(userBeingUpdatedId);
+                user.setId(userBeingUpdatedId);
+                user.setUsername(userDto.getUsername());
+                user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+                user.setFirstName(userDto.getFirstName());
+                user.setLastName(userDto.getLastName());
+                user.setAddress(userDto.getAddress());
+                user.setUserPermissions(null);
+
+                userRepository.save(user);
+
+                userPermissionRepository.deleteAllByUserId(userBeingUpdatedId);
+
+                for (Permission permission : existingPermissions) {
+                    userPermissionRepository.save(
+                            UserPermission.builder()
+                                    .user(user)
+                                    .permission(permission)
+                                    .permissionName(permission.getName())
+                                    .username(user.getUsername())
+                                    .build());
+                }
+                return ResponseEntity.ok(user);
+            }
+            throw new UserNotExistException();
+        }
+        throw new UsernameAlreadyExistException();
+    }
+
+    public void delete(long userId) {
+        if (userRepository.existsById(userId)) {
+            userRepository.deleteById(userId);
+            return;
+        }
+        throw new UserNotExistException();
+    }
+
+    private List<Permission> validatePermissions(UserDto userDto) {
+        List<Long> userDtoPermissions = userDto.getPermissions();
+        Set<Long> userDtoPermissionsSet = new HashSet<>(userDtoPermissions);
+
+        List<Permission> existingPermissions = permissionRepository.findByIdIn(userDto.getPermissions());
+
+        List<String> existingPermissionsFromUserDtoString =
+                existingPermissions.stream().map(Permission::getName).toList();
+
+        if (userDtoPermissionsSet.size() != existingPermissionsFromUserDtoString.size()) {
+            throw new PermissionNotExistException();
+        }
+        return existingPermissions;
     }
 
     public Collection<? extends GrantedAuthority> findPermissionsByUsername(String username) {
