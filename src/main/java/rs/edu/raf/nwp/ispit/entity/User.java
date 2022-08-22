@@ -42,9 +42,11 @@ public class User {
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
+    @ToString.Exclude
     private Set<UserPermission> userPermissions;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
+    @ToString.Exclude
     private Set<Machine> machines;
 }

@@ -15,6 +15,6 @@ public interface MachineRepository extends JpaRepository<Machine, Long> {
 
     boolean existsById(Long id);
 
-    @Query(value = "SELECT * FROM machine WHERE user_id = ?1", nativeQuery = true)
-    List<Machine> findAllMachinesByUserId(Long userId);
+    @Query(value = "SELECT * FROM machine WHERE user_id = ?1 AND active = ?2", nativeQuery = true)
+    List<Machine> findAllRunningMachinesByUserIdAndActive(Long userId, boolean active);
 }
