@@ -21,13 +21,13 @@ public class UserController {
     @PostMapping(value = "/create")
     @PreAuthorize("hasAuthority('can_create_users')")
     public ResponseEntity<User> create(@Valid @RequestBody UserDto userDTO) {
-        return this.userService.create(userDTO);
+        return userService.create(userDTO);
     }
 
     @GetMapping(value = "/read")
     @PreAuthorize("hasAuthority('can_read_users')")
     public Page<User> read(@RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size) {
-        return this.userService.read(page, size);
+        return userService.read(page, size);
     }
 
     @PostMapping(value = "/update/{userBeingUpdatedId}")

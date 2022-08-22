@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import rs.edu.raf.nwp.ispit.exception.ForbiddenException;
 import rs.edu.raf.nwp.ispit.service.UserService;
 import rs.edu.raf.nwp.ispit.util.JwtUtil;
 
@@ -51,6 +52,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
             }
         }
+
         filterChain.doFilter(httpServletRequest, httpServletResponse);
     }
 }

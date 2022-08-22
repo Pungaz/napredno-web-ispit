@@ -5,6 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import javax.crypto.Mac;
+
 @ControllerAdvice
 public class ExceptionController {
 
@@ -26,6 +28,11 @@ public class ExceptionController {
     @ExceptionHandler(value = UserNotExistException.class)
     public ResponseEntity<Object> exception(UserNotExistException exception) {
         return new ResponseEntity<>("User doesn't exist" , HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(value = MachineNotExistsException.class)
+    public ResponseEntity<Object> exception(MachineNotExistsException exception) {
+        return new ResponseEntity<>("Machine doesn't exist" , HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 

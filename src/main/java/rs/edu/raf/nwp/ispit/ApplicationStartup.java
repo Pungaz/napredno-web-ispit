@@ -34,17 +34,33 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
         permissionRepository.save(Permission.builder()
                 .name("can_create_users")
                 .build());
-
         permissionRepository.save(Permission.builder()
                 .name("can_read_users")
                 .build());
-
         permissionRepository.save(Permission.builder()
                 .name("can_update_users")
                 .build());
-
         permissionRepository.save(Permission.builder()
                 .name("can_delete_users")
+                .build());
+
+        permissionRepository.save(Permission.builder()
+                .name("can_search_machines")
+                .build());
+        permissionRepository.save(Permission.builder()
+                .name("can_start_machines")
+                .build());
+        permissionRepository.save(Permission.builder()
+                .name("can_stop_machines")
+                .build());
+        permissionRepository.save(Permission.builder()
+                .name("can_restart_machines")
+                .build());
+        permissionRepository.save(Permission.builder()
+                .name("can_create_machines")
+                .build());
+        permissionRepository.save(Permission.builder()
+                .name("can_destroy_machines")
                 .build());
 
 
