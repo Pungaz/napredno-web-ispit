@@ -2,10 +2,7 @@ package rs.edu.raf.nwp.ispit.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import rs.edu.raf.nwp.ispit.entity.security.UserPermission;
 
 import javax.persistence.*;
@@ -43,11 +40,11 @@ public class User {
     @Column(name = "address")
     private String address;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<UserPermission> userPermissions;
+    @JsonIgnore
+    private Set<UserPermission> userPermissions;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Set<Machine> machines;
+    @JsonIgnore
+    private Set<Machine> machines;
 }

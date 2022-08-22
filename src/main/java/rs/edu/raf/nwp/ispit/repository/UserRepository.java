@@ -16,11 +16,4 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long> {
 
     boolean existsById(long id);
 
-
-
-//    @Modifying
-//    @Query("update User u set u.balance = u.balance + :amount")
-//    @Transactional
-//    public void increaseBalance(@Param("amount") Integer amount);
-
 }

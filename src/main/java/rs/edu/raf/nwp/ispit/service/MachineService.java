@@ -3,18 +3,13 @@ package rs.edu.raf.nwp.ispit.service;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.edu.raf.nwp.ispit.entity.Machine;
-import rs.edu.raf.nwp.ispit.entity.Status;
-import rs.edu.raf.nwp.ispit.entity.User;
 import rs.edu.raf.nwp.ispit.exception.MachineNotExistsException;
 import rs.edu.raf.nwp.ispit.repository.MachineRepository;
 import rs.edu.raf.nwp.ispit.repository.UserRepository;
-
-import javax.persistence.*;
 
 import static rs.edu.raf.nwp.ispit.entity.Status.STOPPED;
 
@@ -41,10 +36,10 @@ public class MachineService {
         return ResponseEntity.ok(machine);
     }
 
+    @Transactional
     public void delete(long machineId) {
-        Machine machine = machineRepository.findMachinesById(machineId);
+        if (machineRepository.existsById(machineId)) {
 
-        if(machine != null){
             machineRepository.deleteById(machineId);
             return;
         }
