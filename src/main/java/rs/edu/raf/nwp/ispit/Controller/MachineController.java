@@ -8,6 +8,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import rs.edu.raf.nwp.ispit.dto.MachineDto;
 import rs.edu.raf.nwp.ispit.entity.Machine;
+import rs.edu.raf.nwp.ispit.entity.Status;
 import rs.edu.raf.nwp.ispit.service.MachineService;
 
 import javax.validation.Valid;
@@ -35,8 +36,20 @@ public class MachineController {
 
     @GetMapping(value = "/search")
     @PreAuthorize("hasAuthority('can_search_machines')")
-    public List<Machine> search() {
-        return machineService.search();
+    public List<Machine> findAll() {
+        return machineService.findAll();
+    }
+
+    @GetMapping(value = "/search/name/{name}")
+    @PreAuthorize("hasAuthority('can_search_machines')")
+    public List<Machine> searchByName(@PathVariable String name) {
+        return machineService.findByName(name);
+    }
+
+    @GetMapping(value = "/search/status/{status}")
+    @PreAuthorize("hasAuthority('can_search_machines')")
+    public List<Machine> searchByStatus(@PathVariable Status status) {
+        return machineService.findByStatus(status);
     }
 
 //    @PostMapping(value = "/delete/{machineId}")

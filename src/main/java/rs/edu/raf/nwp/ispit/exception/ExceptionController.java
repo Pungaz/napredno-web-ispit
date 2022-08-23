@@ -5,8 +5,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import javax.crypto.Mac;
-
 @ControllerAdvice
 public class ExceptionController {
 
@@ -20,9 +18,9 @@ public class ExceptionController {
         return new ResponseEntity<>("Permission doesn't exist", HttpStatus.NOT_ACCEPTABLE);
     }
 
-    @ExceptionHandler(value = UsernameAlreadyExistException.class)
-    public ResponseEntity<Object> exception(UsernameAlreadyExistException exception) {
-        return new ResponseEntity<>("Username already exist" , HttpStatus.INTERNAL_SERVER_ERROR);
+    @ExceptionHandler(value = NameAlreadyExistException.class)
+    public ResponseEntity<Object> exception(NameAlreadyExistException exception) {
+        return new ResponseEntity<>("Name already exist" , HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(value = UserNotExistException.class)
@@ -33,6 +31,11 @@ public class ExceptionController {
     @ExceptionHandler(value = MachineNotExistsException.class)
     public ResponseEntity<Object> exception(MachineNotExistsException exception) {
         return new ResponseEntity<>("Machine doesn't exist" , HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(value = BadStatusException.class)
+    public ResponseEntity<Object> exception(BadStatusException exception) {
+        return new ResponseEntity<>("Status sent doesn't exist" , HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 

@@ -19,7 +19,7 @@ import rs.edu.raf.nwp.ispit.entity.security.Permission;
 import rs.edu.raf.nwp.ispit.entity.security.UserPermission;
 import rs.edu.raf.nwp.ispit.exception.PermissionNotExistException;
 import rs.edu.raf.nwp.ispit.exception.UserNotExistException;
-import rs.edu.raf.nwp.ispit.exception.UsernameAlreadyExistException;
+import rs.edu.raf.nwp.ispit.exception.NameAlreadyExistException;
 import rs.edu.raf.nwp.ispit.repository.PermissionRepository;
 import rs.edu.raf.nwp.ispit.repository.UserPermissionRepository;
 import rs.edu.raf.nwp.ispit.repository.UserRepository;
@@ -73,7 +73,7 @@ public class UserService implements UserDetailsService {
             }
             return ResponseEntity.ok(user);
         }
-        throw new UsernameAlreadyExistException();
+        throw new NameAlreadyExistException();
     }
 
     public Page<User> read(Integer page, Integer size) {
@@ -112,7 +112,7 @@ public class UserService implements UserDetailsService {
             }
             throw new UserNotExistException();
         }
-        throw new UsernameAlreadyExistException();
+        throw new NameAlreadyExistException();
     }
 
     public void delete(long userId) {
