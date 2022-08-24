@@ -38,5 +38,15 @@ public class ExceptionController {
         return new ResponseEntity<>("Status sent doesn't exist" , HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(value = MachineAlreadyRunningException.class)
+    public ResponseEntity<Object> exception(MachineAlreadyRunningException exception) {
+        return new ResponseEntity<>("Machine is already running" , HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(value = MachineAlreadyStoppedException.class)
+    public ResponseEntity<Object> exception(MachineAlreadyStoppedException exception) {
+        return new ResponseEntity<>("Machine is already stopped" , HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
 
 }

@@ -1,10 +1,13 @@
 package rs.edu.raf.nwp.ispit.repository;
 
+import lombok.Data;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.edu.raf.nwp.ispit.entity.Machine;
 
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 @Repository
@@ -25,5 +28,8 @@ public interface MachineRepository extends JpaRepository<Machine, Long> {
 
     @Query(value = "SELECT * FROM machine WHERE user_id = ?1 AND status = ?2 AND active = true", nativeQuery = true)
     List<Machine> findAllByUserAndStatus(Long userId, String status);
+
+    @Query(value = "SELECT * FROM machine WHERE user_id = ?1 AND date_created BETWEEN ?2 AND ?3 AND active = true", nativeQuery = true)
+    List<Machine> findAllByUserAndDate(Long userId, LocalDate startingDate, LocalDate endingDate);
 
 }

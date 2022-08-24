@@ -1,12 +1,9 @@
 package rs.edu.raf.nwp.ispit.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
-import java.util.Date;
+import java.time.LocalDate;
 
 @Entity
 @Data
@@ -17,20 +14,21 @@ public class Machine {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    long id;
+    private long id;
 
-    String name;
+    private String name;
 
-    Date date;
+    private LocalDate dateCreated;
 
     @Enumerated(EnumType.STRING)
-    Status status;
+    private Status status;
 
-    boolean active;
+    private boolean active;
 
+    @Version
+    private Integer version;
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "user_id")
     @ToString.Exclude
     private User user;
-
 }
