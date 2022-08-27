@@ -1,4 +1,4 @@
 package rs.edu.raf.nwp.ispit.exception;
 
-public class PermissionNotExistException extends RuntimeException{
+public class PermissionNotExistException extends RuntimeException {
 }

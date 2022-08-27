@@ -1,34 +1,43 @@
 package rs.edu.raf.nwp.ispit.service;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
 import rs.edu.raf.nwp.ispit.dto.MachineDto;
 import rs.edu.raf.nwp.ispit.entity.Machine;
 import rs.edu.raf.nwp.ispit.entity.Status;
 import rs.edu.raf.nwp.ispit.entity.User;
+import rs.edu.raf.nwp.ispit.exception.DateIncorrectException;
 import rs.edu.raf.nwp.ispit.exception.MachineAlreadyRunningException;
 import rs.edu.raf.nwp.ispit.exception.MachineNotExistsException;
 import rs.edu.raf.nwp.ispit.exception.NameAlreadyExistException;
 import rs.edu.raf.nwp.ispit.repository.MachineRepository;
 import rs.edu.raf.nwp.ispit.repository.UserRepository;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static rs.edu.raf.nwp.ispit.entity.Status.RUNNING;
 import static rs.edu.raf.nwp.ispit.entity.Status.STOPPED;
 
 @Data
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class MachineService {
-    private MachineRepository machineRepository;
-    private UserRepository userRepository;
+    private final MachineRepository machineRepository;
+    private final UserRepository userRepository;
+    private TaskScheduler taskScheduler;
 
     @Transactional
     public ResponseEntity<Machine> create(MachineDto machineDto) {
@@ -77,138 +86,103 @@ public class MachineService {
         return machineRepository.findAllByUserAndName(user.getId(), name);
     }
 
-    public List<Machine> findByStatus(Status status) {
+    public ResponseEntity<List<Machine>> findByStatus(Status status) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findUserByUsername(username);
 
-        return machineRepository.findAllByUserAndStatus(user.getId(), status.name());
+        return ResponseEntity.ok(machineRepository.findAllByUserAndStatus(user.getId(), status.name()));
     }
 
-    public List<Machine> findByDate(LocalDate startingDate, LocalDate endingDate) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findUserByUsername(username);
+    public ResponseEntity<List<Machine>> findByDate(LocalDate startingDate, LocalDate endingDate) {
+        if (startingDate != null && endingDate != null) {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            User user = userRepository.findUserByUsername(username);
 
-        return machineRepository.findAllByUserAndDate(user.getId(), startingDate, endingDate);
-    }
-
-    public ResponseEntity<Machine> realStart(long machineId, String username) throws InterruptedException {
-        User user = userRepository.findUserByUsername(username);
-        Machine machine = machineRepository.findMachineById(machineId);
-
-        if (machine.getUser() == user) {
-            if (machine.getStatus().equals(STOPPED)) {
-//                Thread.sleep(10000);
-
-                machine.setStatus(RUNNING);
-                machineRepository.save(machine);
-                return ResponseEntity.ok(machine);
-
-            } else {
-                throw new MachineAlreadyRunningException();
-            }
+            return ResponseEntity.ok(machineRepository.findAllByUserAndDate(user.getId(), startingDate, endingDate));
         } else {
-            throw new MachineNotExistsException();
+            throw new DateIncorrectException();
         }
-    }
-
-    public ResponseEntity<?> start(long machineId) {
-        WebClient client = WebClient.create("http://localhost:8080/machine");
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-
-        client.put()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/realStart")
-                        .queryParam("machineId", machineId)
-                        .queryParam("username", username)
-                        .queryParam("secret", "nekiMojSecret")
-                        .build())
-                .retrieve()
-                .toBodilessEntity()
-                .subscribe();
-
-        return ResponseEntity.ok("Start done successfully");
     }
 
     @Transactional
-    public ResponseEntity<Machine> realStop(long machineId, String username) throws InterruptedException {
-        User user = userRepository.findUserByUsername(username);
-        Machine machine = machineRepository.findMachineById(machineId);
+    public void start(long machineId, long scheduledTimestamp) {
+        LocalDateTime scheduledDateTime = new Timestamp(scheduledTimestamp).toLocalDateTime();
 
-        if (machine.getUser() == user) {
-            if (machine.getStatus().equals(RUNNING)) {
-//                Thread.sleep(10000);
+        ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
+        taskScheduler = new ConcurrentTaskScheduler(localExecutor);
 
-                machine.setStatus(STOPPED);
-                machineRepository.save(machine);
-                return ResponseEntity.ok(machine);
+        taskScheduler.schedule(() -> {
+                    try {
+                        Machine machine = machineRepository.findMachineById(machineId);
+                        if (machine.getStatus().equals(STOPPED)) {
+                            Thread.sleep(10000);
 
-            } else {
-                throw new MachineAlreadyRunningException();
-            }
-        } else {
-            throw new MachineNotExistsException();
-        }
-    }
+                            machine.setStatus(RUNNING);
+                            machineRepository.saveAndFlush(machine);
 
-    public ResponseEntity<?> stop(long machineId) {
-        WebClient client = WebClient.create("http://localhost:8080/machine");
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+                        } else {
+                            throw new MachineAlreadyRunningException();
+                        }
 
-        client.put()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/realStop")
-                        .queryParam("machineId", machineId)
-                        .queryParam("username", username)
-                        .queryParam("secret", "nekiMojSecret")
-                        .build())
-                .retrieve()
-                .toBodilessEntity()
-                .subscribe();
 
-        return ResponseEntity.ok("Stop done successfully");
+                    } catch (Exception e) {
+                        //TODO upisi u bazu
+                    }
+                },
+                Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
     }
 
     @Transactional
-    public ResponseEntity<Machine> realRestart(long machineId, String username) throws InterruptedException {
-        User user = userRepository.findUserByUsername(username);
-        Machine machine = machineRepository.findMachineById(machineId);
+    public void stop(long machineId, long scheduledTimestamp) {
+        LocalDateTime scheduledDateTime = new Timestamp(scheduledTimestamp).toLocalDateTime();
 
-        if (machine.getUser() == user) {
-            if (machine.getStatus().equals(RUNNING)) {
-                Thread.sleep(5000);
-                machine.setStatus(STOPPED);
-                machineRepository.save(machine);
-                machineRepository.flush();
-                Thread.sleep(5000);
+        taskScheduler.schedule(() -> {
+            try {
+                Machine machine = machineRepository.findMachineById(machineId);
 
-                machine = machineRepository.findMachineById(machineId);
-                machine.setStatus(RUNNING);
-                machineRepository.save(machine);
-                return ResponseEntity.ok(machine);
-            } else {
-                throw new MachineAlreadyRunningException();
+                if (machine.getStatus().equals(RUNNING)) {
+                    Thread.sleep(10000);
+
+                    machine.setStatus(STOPPED);
+                    machineRepository.saveAndFlush(machine);
+                } else {
+                    throw new MachineAlreadyRunningException();
+                }
+            } catch (Exception e) {
+                //Todo upisi u bazu
             }
-        } else {
-            throw new MachineNotExistsException();
-        }
+        }, Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
+
     }
 
-    public ResponseEntity<?> restart(long machineId) {
-        WebClient client = WebClient.create("http://localhost:8080/machine");
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+    @Transactional
+    public void restart(long machineId, long scheduledTimestamp) {
+        LocalDateTime scheduledDateTime = new Timestamp(scheduledTimestamp).toLocalDateTime();
 
-        client.put()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/realRestart")
-                        .queryParam("machineId", machineId)
-                        .queryParam("username", username)
-                        .queryParam("secret", "nekiMojSecret")
-                        .build())
-                .retrieve()
-                .toBodilessEntity()
-                .subscribe();
+        ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
+        taskScheduler = new ConcurrentTaskScheduler(localExecutor);
 
-        return ResponseEntity.ok("Restart done successfully");
+        taskScheduler.schedule(() -> {
+                    Machine machine = machineRepository.findMachineById(machineId);
+
+                    try {
+                        if (machine.getStatus().equals(RUNNING)) {
+                            Thread.sleep(5000);
+                            machine.setStatus(STOPPED);
+                            machineRepository.saveAndFlush(machine);
+
+                            Thread.sleep(5000);
+                            machine.setVersion(machine.getVersion() + 1);
+                            machine.setStatus(RUNNING);
+                            machineRepository.saveAndFlush(machine);
+                        } else {
+                            throw new MachineAlreadyRunningException();
+                        }
+                    } catch (Exception e) {
+                        //TODO sacuvaj u bazu
+                    }
+                },
+                Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
     }
 
 }

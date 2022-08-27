@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -37,6 +39,7 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final UserPermissionRepository userPermissionRepository;
     private final PermissionRepository permissionRepository;
+
 
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User myUser = userRepository.findUserByUsername(username);
@@ -145,5 +148,6 @@ public class UserService implements UserDetailsService {
 
         return userPermissions.stream().map(UserPermission::getPermission).toList();
     }
+
 
 }

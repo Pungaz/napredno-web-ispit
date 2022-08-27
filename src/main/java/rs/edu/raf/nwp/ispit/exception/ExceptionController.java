@@ -20,32 +20,37 @@ public class ExceptionController {
 
     @ExceptionHandler(value = NameAlreadyExistException.class)
     public ResponseEntity<Object> exception(NameAlreadyExistException exception) {
-        return new ResponseEntity<>("Name already exist" , HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>("Name already exist", HttpStatus.NOT_ACCEPTABLE);
     }
 
     @ExceptionHandler(value = UserNotExistException.class)
     public ResponseEntity<Object> exception(UserNotExistException exception) {
-        return new ResponseEntity<>("User doesn't exist" , HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>("User doesn't exist", HttpStatus.NOT_ACCEPTABLE);
     }
 
     @ExceptionHandler(value = MachineNotExistsException.class)
     public ResponseEntity<Object> exception(MachineNotExistsException exception) {
-        return new ResponseEntity<>("Machine doesn't exist" , HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>("Machine doesn't exist", HttpStatus.NOT_ACCEPTABLE);
     }
 
     @ExceptionHandler(value = BadStatusException.class)
     public ResponseEntity<Object> exception(BadStatusException exception) {
-        return new ResponseEntity<>("Status sent doesn't exist" , HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>("Status sent doesn't exist", HttpStatus.NOT_ACCEPTABLE);
     }
 
     @ExceptionHandler(value = MachineAlreadyRunningException.class)
     public ResponseEntity<Object> exception(MachineAlreadyRunningException exception) {
-        return new ResponseEntity<>("Machine is already running" , HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>("Machine is already running", HttpStatus.NOT_ACCEPTABLE);
     }
 
     @ExceptionHandler(value = MachineAlreadyStoppedException.class)
     public ResponseEntity<Object> exception(MachineAlreadyStoppedException exception) {
-        return new ResponseEntity<>("Machine is already stopped" , HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>("Machine is already stopped", HttpStatus.NOT_ACCEPTABLE);
+    }
+
+    @ExceptionHandler(value = DateIncorrectException.class)
+    public ResponseEntity<Object> exception(DateIncorrectException exception){
+        return new ResponseEntity<>("Date is incorrect", HttpStatus.NOT_ACCEPTABLE);
     }
 
 
