@@ -53,5 +53,11 @@ public class ExceptionController {
         return new ResponseEntity<>("Date is incorrect", HttpStatus.NOT_ACCEPTABLE);
     }
 
+    @ExceptionHandler(value = MachineNotAvailableException.class)
+    public ResponseEntity<Object> exception(MachineNotAvailableException exception){
+        return new ResponseEntity<>("Machine is currently not available", HttpStatus.LOCKED);
+    }
+
+
 
 }

@@ -45,7 +45,7 @@ public class User {
     @ToString.Exclude
     private Set<UserPermission> userPermissions;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JsonIgnore
     @ToString.Exclude
     private Set<Machine> machines;

@@ -9,13 +9,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.edu.raf.nwp.ispit.dto.MachineDto;
+import rs.edu.raf.nwp.ispit.entity.ErrorMessage;
 import rs.edu.raf.nwp.ispit.entity.Machine;
 import rs.edu.raf.nwp.ispit.entity.Status;
 import rs.edu.raf.nwp.ispit.entity.User;
-import rs.edu.raf.nwp.ispit.exception.DateIncorrectException;
-import rs.edu.raf.nwp.ispit.exception.MachineAlreadyRunningException;
-import rs.edu.raf.nwp.ispit.exception.MachineNotExistsException;
-import rs.edu.raf.nwp.ispit.exception.NameAlreadyExistException;
+import rs.edu.raf.nwp.ispit.exception.*;
+import rs.edu.raf.nwp.ispit.repository.ErrorMessageRepository;
 import rs.edu.raf.nwp.ispit.repository.MachineRepository;
 import rs.edu.raf.nwp.ispit.repository.UserRepository;
 
@@ -39,7 +38,8 @@ public class MachineService {
     private final UserRepository userRepository;
     private TaskScheduler taskScheduler;
 
-    @Transactional
+    private final ErrorMessageRepository errorMessageRepository;
+
     public ResponseEntity<Machine> create(MachineDto machineDto) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
@@ -48,6 +48,7 @@ public class MachineService {
                     .name(machineDto.getName())
                     .status(STOPPED)
                     .active(true)
+                    .available(true)
                     .user(userRepository.findUserByUsername(username))
                     .dateCreated(LocalDate.now())
                     .build();
@@ -59,7 +60,6 @@ public class MachineService {
         throw new NameAlreadyExistException();
     }
 
-    @Transactional
     public void destroy(long machineId) {
         Machine machine = machineRepository.findMachineById(machineId);
 
@@ -106,83 +106,215 @@ public class MachineService {
 
     @Transactional
     public void start(long machineId, long scheduledTimestamp) {
-        LocalDateTime scheduledDateTime = new Timestamp(scheduledTimestamp).toLocalDateTime();
+        Machine machine = machineRepository.findMachineById(machineId);
 
-        ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-        taskScheduler = new ConcurrentTaskScheduler(localExecutor);
+        try {
+            if (machine != null) {
+                if (machine.isAvailable()) {
 
-        taskScheduler.schedule(() -> {
-                    try {
-                        Machine machine = machineRepository.findMachineById(machineId);
-                        if (machine.getStatus().equals(STOPPED)) {
-                            Thread.sleep(10000);
+                    machine.setAvailable(false);
 
-                            machine.setStatus(RUNNING);
-                            machineRepository.saveAndFlush(machine);
+                    LocalDateTime scheduledDateTime = new Timestamp(scheduledTimestamp).toLocalDateTime();
 
-                        } else {
-                            throw new MachineAlreadyRunningException();
-                        }
+                    ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
+                    taskScheduler = new ConcurrentTaskScheduler(localExecutor);
 
+                    taskScheduler.schedule(() -> {
+                                try {
+                                    startAsync(machine, 0);
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            },
+                            Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
+                } else {
+                    throw new MachineNotAvailableException();
+                }
+            } else {
+                throw new MachineNotExistsException();
+            }
+        } catch (Exception e) {
+            ErrorMessage errorMessage = ErrorMessage.builder()
+                    .timestamp(System.currentTimeMillis())
+                    .operation("Start")
+                    .message(e.getMessage())
+                    .build();
+            errorMessageRepository.save(errorMessage);
+        }
+    }
 
-                    } catch (Exception e) {
-                        //TODO upisi u bazu
-                    }
-                },
-                Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
+    public void startAsync(Machine machine, int retryCount) throws InterruptedException {
+        if (retryCount == 3) {
+            return;
+        }
+
+        try {
+            if (machine.getStatus().equals(STOPPED)) {
+                Thread.sleep(10000);
+
+                machine.setStatus(RUNNING);
+                machine.setAvailable(true);
+                machineRepository.saveAndFlush(machine);
+            } else {
+                throw new MachineAlreadyRunningException();
+            }
+        } catch (Exception e) {
+            if (retryCount == 2) {
+                ErrorMessage errorMessage = ErrorMessage.builder()
+                        .timestamp(System.currentTimeMillis())
+                        .operation("Start async")
+                        .message(e.getMessage())
+                        .build();
+                errorMessageRepository.save(errorMessage);
+            }
+
+            System.out.println("START has retried");
+            Thread.sleep(1000);
+            startAsync(machine, ++retryCount);
+        }
     }
 
     @Transactional
     public void stop(long machineId, long scheduledTimestamp) {
-        LocalDateTime scheduledDateTime = new Timestamp(scheduledTimestamp).toLocalDateTime();
+        Machine machine = machineRepository.findMachineById(machineId);
 
-        taskScheduler.schedule(() -> {
-            try {
-                Machine machine = machineRepository.findMachineById(machineId);
+        try {
+            if (machine != null) {
+                if (machine.isAvailable()) {
 
-                if (machine.getStatus().equals(RUNNING)) {
-                    Thread.sleep(10000);
+                    machine.setAvailable(false);
 
-                    machine.setStatus(STOPPED);
-                    machineRepository.saveAndFlush(machine);
+                    LocalDateTime scheduledDateTime = new Timestamp(scheduledTimestamp).toLocalDateTime();
+
+                    ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
+                    taskScheduler = new ConcurrentTaskScheduler(localExecutor);
+
+                    taskScheduler.schedule(() -> {
+                                try {
+                                    stopAsync(machine, 0);
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            },
+                            Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
                 } else {
-                    throw new MachineAlreadyRunningException();
+                    throw new MachineNotAvailableException();
                 }
-            } catch (Exception e) {
-                //Todo upisi u bazu
+            } else {
+                throw new MachineNotExistsException();
             }
-        }, Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
+        } catch (Exception e) {
+            ErrorMessage errorMessage = ErrorMessage.builder()
+                    .timestamp(System.currentTimeMillis())
+                    .operation("Stop")
+                    .message(e.getMessage())
+                    .build();
+            errorMessageRepository.save(errorMessage);
+        }
+    }
 
+    public void stopAsync(Machine machine, int retryCount) throws InterruptedException {
+        if (retryCount == 3) {
+            return;
+        }
+
+        try {
+            if (machine.getStatus().equals(RUNNING)) {
+                Thread.sleep(10000);
+
+                machine.setStatus(STOPPED);
+                machine.setAvailable(true);
+                machineRepository.saveAndFlush(machine);
+            } else {
+                throw new MachineAlreadyRunningException();
+            }
+        } catch (Exception e) {
+            if (retryCount == 2) {
+                ErrorMessage errorMessage = ErrorMessage.builder()
+                        .timestamp(System.currentTimeMillis())
+                        .operation("Stop async")
+                        .message(e.getMessage())
+                        .build();
+                errorMessageRepository.save(errorMessage);
+            }
+
+            System.out.println("STOP retried");
+            Thread.sleep(1000);
+            stopAsync(machine, ++retryCount);
+        }
     }
 
     @Transactional
     public void restart(long machineId, long scheduledTimestamp) {
-        LocalDateTime scheduledDateTime = new Timestamp(scheduledTimestamp).toLocalDateTime();
+        Machine machine = machineRepository.findMachineById(machineId);
 
-        ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-        taskScheduler = new ConcurrentTaskScheduler(localExecutor);
+        try {
+            if (machine != null) {
+                if (machine.isAvailable()) {
 
-        taskScheduler.schedule(() -> {
-                    Machine machine = machineRepository.findMachineById(machineId);
+                    machine.setAvailable(false);
 
-                    try {
-                        if (machine.getStatus().equals(RUNNING)) {
-                            Thread.sleep(5000);
-                            machine.setStatus(STOPPED);
-                            machineRepository.saveAndFlush(machine);
+                    LocalDateTime scheduledDateTime = new Timestamp(scheduledTimestamp).toLocalDateTime();
 
-                            Thread.sleep(5000);
-                            machine.setVersion(machine.getVersion() + 1);
-                            machine.setStatus(RUNNING);
-                            machineRepository.saveAndFlush(machine);
-                        } else {
-                            throw new MachineAlreadyRunningException();
-                        }
-                    } catch (Exception e) {
-                        //TODO sacuvaj u bazu
-                    }
-                },
-                Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
+                    ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
+                    taskScheduler = new ConcurrentTaskScheduler(localExecutor);
+
+                    taskScheduler.schedule(() -> {
+                                try {
+                                    restartAsync(machine, 0);
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            },
+                            Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
+                } else {
+                    throw new MachineNotAvailableException();
+                }
+            } else {
+                throw new MachineNotExistsException();
+            }
+        } catch (Exception e) {
+            ErrorMessage errorMessage = ErrorMessage.builder()
+                    .timestamp(System.currentTimeMillis())
+                    .operation("Restart")
+                    .message(e.getMessage())
+                    .build();
+            errorMessageRepository.save(errorMessage);
+        }
+    }
+
+    public void restartAsync(Machine machine, int retryCount) throws InterruptedException {
+        if (retryCount == 3) {
+            return;
+        }
+
+        try {
+            if (machine.getStatus().equals(RUNNING)) {
+                Thread.sleep(5000);
+                machine.setStatus(STOPPED);
+                machineRepository.saveAndFlush(machine);
+
+                Thread.sleep(5000);
+                machine.setStatus(RUNNING);
+                machine.setAvailable(true);
+                machineRepository.saveAndFlush(machine);
+            } else {
+                throw new MachineAlreadyRunningException();
+            }
+        } catch (Exception e) {
+            if (retryCount == 2) {
+                ErrorMessage errorMessage = ErrorMessage.builder()
+                        .timestamp(System.currentTimeMillis())
+                        .operation("Restart async")
+                        .message(e.getMessage())
+                        .build();
+                errorMessageRepository.save(errorMessage);
+            }
+
+            System.out.println("RESTART retried");
+            Thread.sleep(1000);
+            restartAsync(machine, ++retryCount);
+        }
     }
 
 }

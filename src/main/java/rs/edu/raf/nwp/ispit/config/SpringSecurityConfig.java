@@ -2,6 +2,7 @@ package rs.edu.raf.nwp.ispit.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,6 +18,7 @@ import rs.edu.raf.nwp.ispit.service.UserService;
 
 @EnableWebSecurity
 @EnableScheduling
+@EnableRetry
 @EnableAsync
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {

@@ -1,5 +1,6 @@
 package rs.edu.raf.nwp.ispit.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
@@ -25,10 +26,13 @@ public class Machine {
 
     private boolean active;
 
-    @Version
-    private Integer version;
+    private boolean available;
+
+//    @Version
+//    private Integer version;
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "user_id")
-//    @ToString.Exclude
+    @ToString.Exclude
+    @JsonIgnore
     private User user;
 }

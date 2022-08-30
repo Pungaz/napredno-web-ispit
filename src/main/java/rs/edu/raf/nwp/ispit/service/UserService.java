@@ -16,20 +16,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.edu.raf.nwp.ispit.dto.UserDto;
+import rs.edu.raf.nwp.ispit.entity.Machine;
 import rs.edu.raf.nwp.ispit.entity.User;
 import rs.edu.raf.nwp.ispit.entity.security.Permission;
 import rs.edu.raf.nwp.ispit.entity.security.UserPermission;
 import rs.edu.raf.nwp.ispit.exception.PermissionNotExistException;
 import rs.edu.raf.nwp.ispit.exception.UserNotExistException;
 import rs.edu.raf.nwp.ispit.exception.NameAlreadyExistException;
+import rs.edu.raf.nwp.ispit.repository.MachineRepository;
 import rs.edu.raf.nwp.ispit.repository.PermissionRepository;
 import rs.edu.raf.nwp.ispit.repository.UserPermissionRepository;
 import rs.edu.raf.nwp.ispit.repository.UserRepository;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Data
 @Service
@@ -39,6 +38,8 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final UserPermissionRepository userPermissionRepository;
     private final PermissionRepository permissionRepository;
+
+    private final MachineRepository machineRepository;
 
 
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -118,8 +119,22 @@ public class UserService implements UserDetailsService {
         throw new NameAlreadyExistException();
     }
 
+    @Transactional
     public void delete(long userId) {
-        if (userRepository.existsById(userId)) {
+        User user = userRepository.findUserById(userId);
+
+        if (user != null) {
+            List<Machine> usersMachines = machineRepository.findAllByUser(user);
+            List<Machine> machinesWithoutTheUser = new ArrayList<>();
+
+            for (Machine machine: usersMachines){
+                machine.setUser(null);
+                machine.setActive(false);
+                machinesWithoutTheUser.add(machine);
+            }
+
+            machineRepository.saveAll(machinesWithoutTheUser);
+
             userRepository.deleteById(userId);
             return;
         }
