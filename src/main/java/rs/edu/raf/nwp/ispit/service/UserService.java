@@ -80,8 +80,17 @@ public class UserService implements UserDetailsService {
         throw new NameAlreadyExistException();
     }
 
-    public Page<User> read(Integer page, Integer size) {
-        return this.userRepository.findAll(PageRequest.of(page, size, Sort.by("username").descending()));
+    public ResponseEntity<List<User>> read() {
+        List<User> users = (List<User>) this.userRepository.findAll();
+        if (users.isEmpty()) {
+            throw new UserNotExistException();
+        }
+
+        for (User user: users){
+            user.setMachines(machineRepository.findAllByUser(user));
+        }
+
+        return ResponseEntity.ok(users);
     }
 
     @Transactional
@@ -124,10 +133,10 @@ public class UserService implements UserDetailsService {
         User user = userRepository.findUserById(userId);
 
         if (user != null) {
-            List<Machine> usersMachines = machineRepository.findAllByUser(user);
+            List<Machine> usersMachines = machineRepository.findAllByUserId(user.getId());
             List<Machine> machinesWithoutTheUser = new ArrayList<>();
 
-            for (Machine machine: usersMachines){
+            for (Machine machine : usersMachines) {
                 machine.setUser(null);
                 machine.setActive(false);
                 machinesWithoutTheUser.add(machine);

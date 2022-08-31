@@ -1,5 +1,6 @@
 package rs.edu.raf.nwp.ispit.entity.security;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import rs.edu.raf.nwp.ispit.entity.User;
 
@@ -10,6 +11,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Builder
 @Getter
+@Setter
 public class UserPermission {
 
     @Id
@@ -18,10 +20,14 @@ public class UserPermission {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
+    @ToString.Exclude
     private User user;
 
     @ManyToOne
     @JoinColumn(name = "permission_id", nullable = false)
+    @JsonIgnore
+    @ToString.Exclude
     private Permission permission;
 
     @Column(name = "username")

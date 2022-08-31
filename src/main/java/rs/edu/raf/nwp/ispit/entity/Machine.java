@@ -7,7 +7,8 @@ import javax.persistence.*;
 import java.time.LocalDate;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -28,9 +29,13 @@ public class Machine {
 
     private boolean available;
 
-//    @Version
+    //    @Version
 //    private Integer version;
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "user_id")
+    @JsonIgnore
+    @ToString.Exclude
     private User user;
+
 }
+

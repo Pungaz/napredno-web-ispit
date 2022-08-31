@@ -1,7 +1,6 @@
 package rs.edu.raf.nwp.ispit.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import rs.edu.raf.nwp.ispit.entity.security.UserPermission;
 
@@ -41,12 +40,8 @@ public class User {
     private String address;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonIgnore
-    @ToString.Exclude
     private Set<UserPermission> userPermissions;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    @JsonIgnore
-    @ToString.Exclude
     private Set<Machine> machines;
 }

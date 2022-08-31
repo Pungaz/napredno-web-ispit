@@ -28,8 +28,8 @@ public class UserController {
 
     @GetMapping(value = "/read")
     @PreAuthorize("hasAuthority('can_read_users')")
-    public Page<User> read(@RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "10") Integer size) {
-        return userService.read(page, size);
+    public ResponseEntity<List<User>> read() {
+        return userService.read();
     }
 
     @PostMapping(value = "/update/{userBeingUpdatedId}")

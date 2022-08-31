@@ -8,6 +8,7 @@ import rs.edu.raf.nwp.ispit.entity.User;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public interface MachineRepository extends JpaRepository<Machine, Long> {
@@ -15,7 +16,7 @@ public interface MachineRepository extends JpaRepository<Machine, Long> {
 
     boolean existsByNameAndActive(String name, boolean active);
 
-    List<Machine> findAllByUser(User user);
+    Set<Machine> findAllByUser(User user);
 
     @Query(value = "SELECT * FROM machine WHERE user_id = ?1 AND active = true", nativeQuery = true)
     List<Machine> findAllByUserId(Long userId);
