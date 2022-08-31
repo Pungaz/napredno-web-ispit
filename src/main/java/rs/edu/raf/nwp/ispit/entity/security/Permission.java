@@ -26,7 +26,6 @@ public class Permission implements GrantedAuthority {
     @NotBlank(message = "Permission name is mandatory")
     private String name;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     @OneToMany(mappedBy = "permission", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     Set<UserPermission> userPermissions;
 

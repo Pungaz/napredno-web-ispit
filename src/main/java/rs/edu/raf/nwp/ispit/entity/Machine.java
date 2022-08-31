@@ -32,7 +32,5 @@ public class Machine {
 //    private Integer version;
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "user_id")
-    @ToString.Exclude
-    @JsonIgnore
     private User user;
 }

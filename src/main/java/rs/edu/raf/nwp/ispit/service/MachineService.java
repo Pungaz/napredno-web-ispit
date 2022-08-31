@@ -43,7 +43,7 @@ public class MachineService {
     public ResponseEntity<Machine> create(MachineDto machineDto) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        if (!machineRepository.existsByName(machineDto.getName())) {
+        if (!machineRepository.existsByNameAndActive(machineDto.getName(), true)) {
             Machine machine = Machine.builder()
                     .name(machineDto.getName())
                     .status(STOPPED)
@@ -61,7 +61,7 @@ public class MachineService {
     }
 
     public void destroy(long machineId) {
-        Machine machine = machineRepository.findMachineById(machineId);
+        Machine machine = machineRepository.findMachineByIdAndActive(machineId, true);
 
         if (machine != null && machine.getStatus() == STOPPED) {
             machine.setActive(false);
@@ -76,7 +76,7 @@ public class MachineService {
 
         User user = userRepository.findUserByUsername(username);
 
-        return machineRepository.findAllByUserIdAndActive(user.getId(), true);
+        return machineRepository.findAllByUserId(user.getId());
     }
 
     public List<Machine> findByName(String name) {
@@ -106,7 +106,7 @@ public class MachineService {
 
     @Transactional
     public void start(long machineId, long scheduledTimestamp) {
-        Machine machine = machineRepository.findMachineById(machineId);
+        Machine machine = machineRepository.findMachineByIdAndActive(machineId, true);
 
         try {
             if (machine != null) {
@@ -176,7 +176,7 @@ public class MachineService {
 
     @Transactional
     public void stop(long machineId, long scheduledTimestamp) {
-        Machine machine = machineRepository.findMachineById(machineId);
+        Machine machine = machineRepository.findMachineByIdAndActive(machineId, true);
 
         try {
             if (machine != null) {
@@ -246,7 +246,7 @@ public class MachineService {
 
     @Transactional
     public void restart(long machineId, long scheduledTimestamp) {
-        Machine machine = machineRepository.findMachineById(machineId);
+        Machine machine = machineRepository.findMachineByIdAndActive(machineId, true);
 
         try {
             if (machine != null) {

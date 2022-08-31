@@ -6,10 +6,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import rs.edu.raf.nwp.ispit.dto.UserDto;
+import rs.edu.raf.nwp.ispit.entity.Machine;
 import rs.edu.raf.nwp.ispit.entity.User;
 import rs.edu.raf.nwp.ispit.service.UserService;
 
 import javax.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping("/user")
