@@ -32,17 +32,16 @@ public class UserController {
         return userService.read();
     }
 
-    @PostMapping(value = "/update/{userBeingUpdatedId}")
+    @PutMapping(value = "/update/{userBeingUpdatedId}")
     @PreAuthorize("hasAuthority('can_update_users')")
     public ResponseEntity<User> update(@Valid @RequestBody UserDto userDTO, @PathVariable long userBeingUpdatedId) {
         return userService.update(userDTO, userBeingUpdatedId);
     }
 
-    @PostMapping(value = "/delete/{userId}")
+    @DeleteMapping(value = "/delete/{userId}")
     @PreAuthorize("hasAuthority('can_delete_users')")
-    public ResponseEntity<?> delete(@PathVariable long userId) {
+    public void delete(@PathVariable long userId) {
         userService.delete(userId);
-        return ResponseEntity.ok("User deleted successfully");
     }
 
 }

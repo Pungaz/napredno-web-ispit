@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import rs.edu.raf.nwp.ispit.repository.PermissionRepository;
+import rs.edu.raf.nwp.ispit.repository.UserRepository;
 import rs.edu.raf.nwp.ispit.service.UserService;
 
 import java.io.Serializable;
@@ -21,6 +22,7 @@ import java.util.Map;
 public class JwtUtil implements Serializable {
 
     private final UserService userService;
+    private final UserRepository userRepository;
     @Value("${jwt.secret}")
     private String secret;
 
@@ -40,6 +42,7 @@ public class JwtUtil implements Serializable {
         Map<String, Object> claims = new HashMap<>();
 
         claims.put("Permissions", userService.findPermissionsByUsername(username));
+        claims.put("userId", userRepository.findUserByUsername(username).getId());
 
         return Jwts.builder()
                 .setClaims(claims)
