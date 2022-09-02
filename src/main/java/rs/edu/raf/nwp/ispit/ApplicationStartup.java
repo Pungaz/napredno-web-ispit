@@ -1,6 +1,5 @@
 package rs.edu.raf.nwp.ispit;
 
-
 import lombok.AllArgsConstructor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
@@ -69,8 +68,8 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
         User user = User.builder()
                 .username("Ja")
                 .password(passwordEncoder.encode("Neki"))
-                .firstName("Ime")
-                .lastName("Prezime")
+                .firstname("Ime")
+                .lastname("Prezime")
                 .address("Neki br 1")
                 .build();
 

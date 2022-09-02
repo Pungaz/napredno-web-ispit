@@ -3,9 +3,13 @@ package rs.edu.raf.nwp.ispit.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import rs.edu.raf.nwp.ispit.repository.PermissionRepository;
+import rs.edu.raf.nwp.ispit.service.UserService;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -13,8 +17,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
+@RequiredArgsConstructor
 public class JwtUtil implements Serializable {
 
+    private final UserService userService;
     @Value("${jwt.secret}")
     private String secret;
 
@@ -32,6 +38,8 @@ public class JwtUtil implements Serializable {
 
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
+
+        claims.put("Permissions", userService.findPermissionsByUsername(username));
 
         return Jwts.builder()
                 .setClaims(claims)

@@ -30,11 +30,11 @@ public class User {
 
     @Column(name = "first_name", nullable = false)
     @NotBlank(message = "First name is mandatory")
-    private String firstName;
+    private String firstname;
 
     @Column(name = "last_name", nullable = false)
     @NotBlank(message = "Last name is mandatory")
-    private String lastName;
+    private String lastname;
 
     @Column(name = "address")
     private String address;

@@ -58,8 +58,8 @@ public class UserService implements UserDetailsService {
             User user = User.builder()
                     .username(userDto.getUsername())
                     .password(passwordEncoder.encode(userDto.getPassword()))
-                    .firstName(userDto.getFirstName())
-                    .lastName(userDto.getLastName())
+                    .firstname(userDto.getFirstname())
+                    .lastname(userDto.getLastname())
                     .address(userDto.getAddress())
                     .userPermissions(null)
                     .build();
@@ -103,8 +103,8 @@ public class UserService implements UserDetailsService {
                 user.setId(userBeingUpdatedId);
                 user.setUsername(userDto.getUsername());
                 user.setPassword(passwordEncoder.encode(userDto.getPassword()));
-                user.setFirstName(userDto.getFirstName());
-                user.setLastName(userDto.getLastName());
+                user.setFirstname(userDto.getFirstname());
+                user.setLastname(userDto.getLastname());
                 user.setAddress(userDto.getAddress());
                 user.setUserPermissions(null);
 
@@ -152,6 +152,7 @@ public class UserService implements UserDetailsService {
 
     private List<Permission> validatePermissions(UserDto userDto) {
         List<Long> userDtoPermissions = userDto.getPermissions();
+
         Set<Long> userDtoPermissionsSet = new HashSet<>(userDtoPermissions);
 
         List<Permission> existingPermissions = permissionRepository.findByIdIn(userDto.getPermissions());

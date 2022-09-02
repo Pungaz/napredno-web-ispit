@@ -7,6 +7,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.web.bind.annotation.*;
 import rs.edu.raf.nwp.ispit.dto.request.LoginRequest;
 import rs.edu.raf.nwp.ispit.dto.response.LoginResponse;
+import rs.edu.raf.nwp.ispit.exception.UserNotExistException;
 import rs.edu.raf.nwp.ispit.util.JwtUtil;
 
 @RestController
@@ -28,8 +29,7 @@ public class AuthController {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(401).build();
+            throw new UserNotExistException();
         }
         return ResponseEntity.ok(new LoginResponse(jwtUtil.generateToken(loginRequest.getUsername())));
     }
