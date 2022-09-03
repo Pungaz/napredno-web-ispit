@@ -129,7 +129,7 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public void delete(long userId) {
+    public ResponseEntity<?> delete(long userId) {
         User user = userRepository.findUserById(userId);
 
         if (user != null) {
@@ -145,7 +145,7 @@ public class UserService implements UserDetailsService {
             machineRepository.saveAll(machinesWithoutTheUser);
 
             userRepository.deleteById(userId);
-            return;
+            return ResponseEntity.ok("Deleted");
         }
         throw new UserNotExistException();
     }

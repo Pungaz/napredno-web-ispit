@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.edu.raf.nwp.ispit.dto.MachineDto;
@@ -19,6 +20,7 @@ import rs.edu.raf.nwp.ispit.repository.MachineRepository;
 import rs.edu.raf.nwp.ispit.repository.UserRepository;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -60,15 +62,23 @@ public class MachineService {
         throw new NameAlreadyExistException();
     }
 
-    public void destroy(long machineId) {
+    public ResponseEntity<?> destroy(long machineId) {
         Machine machine = machineRepository.findMachineByIdAndActive(machineId, true);
 
-        if (machine != null && machine.getStatus() == STOPPED) {
-            machine.setActive(false);
-            machineRepository.save(machine);
-            return;
+        if (machine != null) {
+            if (machine.getStatus() == STOPPED) {
+                machine.setActive(false);
+                machineRepository.save(machine);
+
+                return ResponseEntity.ok("Machine deleted");
+
+            } else {
+                throw new MachineAlreadyRunningException();
+            }
+        } else {
+            throw new MachineNotExistsException();
         }
-        throw new MachineNotExistsException();
+
     }
 
     public List<Machine> findAll() {
@@ -93,7 +103,10 @@ public class MachineService {
         return ResponseEntity.ok(machineRepository.findAllByUserAndStatus(user.getId(), status.name()));
     }
 
-    public ResponseEntity<List<Machine>> findByDate(LocalDate startingDate, LocalDate endingDate) {
+    public ResponseEntity<List<Machine>> findByDate(long startingDateLong, long endingDateLong) {
+        LocalDate startingDate = Instant.ofEpochMilli(startingDateLong).atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate endingDate = Instant.ofEpochMilli(endingDateLong).atZone(ZoneId.systemDefault()).toLocalDate();
+
         if (startingDate != null && endingDate != null) {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             User user = userRepository.findUserByUsername(username);
@@ -105,28 +118,34 @@ public class MachineService {
     }
 
     @Transactional
-    public void start(long machineId, long scheduledTimestamp) {
+    public ResponseEntity<?> start(long machineId, long scheduledTimestamp) {
         Machine machine = machineRepository.findMachineByIdAndActive(machineId, true);
 
         try {
             if (machine != null) {
                 if (machine.isAvailable()) {
+                    if (machine.getStatus().equals(STOPPED)) {
 
-                    machine.setAvailable(false);
+                        machine.setAvailable(false);
 
-                    LocalDateTime scheduledDateTime = new Timestamp(scheduledTimestamp).toLocalDateTime();
+                        LocalDateTime scheduledDateTime = new Timestamp(scheduledTimestamp).toLocalDateTime();
 
-                    ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-                    taskScheduler = new ConcurrentTaskScheduler(localExecutor);
+                        ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
+                        taskScheduler = new ConcurrentTaskScheduler(localExecutor);
 
-                    taskScheduler.schedule(() -> {
-                                try {
-                                    startAsync(machine, 0);
-                                } catch (InterruptedException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            },
-                            Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
+                        taskScheduler.schedule(() -> {
+                                    try {
+                                        startAsync(machine, 0);
+                                    } catch (InterruptedException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                },
+                                Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
+
+                        return ResponseEntity.ok("Machine started");
+                    } else {
+                        throw new MachineAlreadyRunningException();
+                    }
                 } else {
                     throw new MachineNotAvailableException();
                 }
@@ -140,6 +159,8 @@ public class MachineService {
                     .message(e.getMessage())
                     .build();
             errorMessageRepository.save(errorMessage);
+
+            throw e;
         }
     }
 
@@ -166,6 +187,8 @@ public class MachineService {
                         .message(e.getMessage())
                         .build();
                 errorMessageRepository.save(errorMessage);
+
+                throw e;
             }
 
             System.out.println("START has retried");
@@ -175,7 +198,7 @@ public class MachineService {
     }
 
     @Transactional
-    public void stop(long machineId, long scheduledTimestamp) {
+    public ResponseEntity<?> stop(long machineId, long scheduledTimestamp) {
         Machine machine = machineRepository.findMachineByIdAndActive(machineId, true);
 
         try {
@@ -197,6 +220,8 @@ public class MachineService {
                                 }
                             },
                             Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
+
+                    return ResponseEntity.ok("Machine stopped");
                 } else {
                     throw new MachineNotAvailableException();
                 }
@@ -210,6 +235,8 @@ public class MachineService {
                     .message(e.getMessage())
                     .build();
             errorMessageRepository.save(errorMessage);
+
+            throw e;
         }
     }
 
@@ -236,6 +263,8 @@ public class MachineService {
                         .message(e.getMessage())
                         .build();
                 errorMessageRepository.save(errorMessage);
+
+                throw e;
             }
 
             System.out.println("STOP retried");
@@ -245,7 +274,7 @@ public class MachineService {
     }
 
     @Transactional
-    public void restart(long machineId, long scheduledTimestamp) {
+    public ResponseEntity<?> restart(long machineId, long scheduledTimestamp) {
         Machine machine = machineRepository.findMachineByIdAndActive(machineId, true);
 
         try {
@@ -267,6 +296,8 @@ public class MachineService {
                                 }
                             },
                             Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
+
+                    return ResponseEntity.ok("Machine restarted");
                 } else {
                     throw new MachineNotAvailableException();
                 }
@@ -280,6 +311,8 @@ public class MachineService {
                     .message(e.getMessage())
                     .build();
             errorMessageRepository.save(errorMessage);
+
+            throw e;
         }
     }
 
@@ -309,6 +342,8 @@ public class MachineService {
                         .message(e.getMessage())
                         .build();
                 errorMessageRepository.save(errorMessage);
+
+                throw e;
             }
 
             System.out.println("RESTART retried");

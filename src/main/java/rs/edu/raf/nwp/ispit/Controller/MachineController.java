@@ -28,11 +28,10 @@ public class MachineController {
         return machineService.create(machineDto);
     }
 
-    @PostMapping(value = "/destroy/{machineId}")
+    @PutMapping(value = "/destroy/{machineId}")
     @PreAuthorize("hasAuthority('can_destroy_machines')")
     public ResponseEntity<?> destroy(@PathVariable long machineId) {
-        machineService.destroy(machineId);
-        return ResponseEntity.ok("Machine deleted successfully");
+        return machineService.destroy(machineId);
     }
 
     @GetMapping(value = "/search")
@@ -55,40 +54,39 @@ public class MachineController {
 
     @GetMapping(value = "/search/date/{startingDate}/{endingDate}")
     @PreAuthorize("hasAuthority('can_search_machines')")
-    public ResponseEntity<List<Machine>> findByDate(@PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startingDate,
-                                                    @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endingDate) {
+    public ResponseEntity<List<Machine>> findByDate(@PathVariable long startingDate,
+                                                    @PathVariable long endingDate) {
         return machineService.findByDate(startingDate, endingDate);
     }
 
     @PutMapping(value = "/start/{machineId}")
     @PreAuthorize("hasAuthority('can_start_machines')")
-    public void start(@PathVariable long machineId, @RequestParam Optional<Long> time) {
+    public ResponseEntity<?> start(@PathVariable long machineId, @RequestParam Optional<Long> time) {
         if (time.isEmpty()) {
-            machineService.start(machineId, System.currentTimeMillis());
+            return ResponseEntity.ok(machineService.start(machineId, System.currentTimeMillis()));
         } else {
-            machineService.start(machineId, time.get());
+            return ResponseEntity.ok(machineService.start(machineId, time.get()));
         }
     }
 
     @PutMapping(value = "/stop/{machineId}")
     @PreAuthorize("hasAuthority('can_stop_machines')")
-    public void stop(@PathVariable long machineId, @RequestParam Optional<Long> time) {
+    public ResponseEntity<?> stop(@PathVariable long machineId, @RequestParam Optional<Long> time) {
         if (time.isEmpty()) {
-            machineService.stop(machineId, System.currentTimeMillis());
+            return ResponseEntity.ok(machineService.stop(machineId, System.currentTimeMillis()));
         } else {
-            machineService.stop(machineId, time.get());
+            return ResponseEntity.ok(machineService.stop(machineId, time.get()));
         }
     }
 
     @PutMapping(value = "/restart/{machineId}")
     @PreAuthorize("hasAuthority('can_restart_machines')")
-    public void restart(@PathVariable long machineId, @RequestParam Optional<Long> time) {
+    public ResponseEntity<?> restart(@PathVariable long machineId, @RequestParam Optional<Long> time) {
         if (time.isEmpty()) {
-            machineService.restart(machineId, System.currentTimeMillis());
+            return ResponseEntity.ok(machineService.restart(machineId, System.currentTimeMillis()));
         } else {
-            machineService.restart(machineId, time.get());
+            return ResponseEntity.ok(machineService.restart(machineId, time.get()));
         }
-
     }
 }
 
