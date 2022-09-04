@@ -6,9 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import rs.edu.raf.nwp.ispit.dto.MachineDto;
 import rs.edu.raf.nwp.ispit.entity.ErrorMessage;
 import rs.edu.raf.nwp.ispit.entity.Machine;
@@ -38,9 +36,8 @@ import static rs.edu.raf.nwp.ispit.entity.Status.STOPPED;
 public class MachineService {
     private final MachineRepository machineRepository;
     private final UserRepository userRepository;
-    private TaskScheduler taskScheduler;
-
     private final ErrorMessageRepository errorMessageRepository;
+    private TaskScheduler taskScheduler;
 
     public ResponseEntity<Machine> create(MachineDto machineDto) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -117,7 +114,6 @@ public class MachineService {
         }
     }
 
-    @Transactional
     public ResponseEntity<?> start(long machineId, long scheduledTimestamp) {
         Machine machine = machineRepository.findMachineByIdAndActive(machineId, true);
 
@@ -153,13 +149,7 @@ public class MachineService {
                 throw new MachineNotExistsException();
             }
         } catch (Exception e) {
-            ErrorMessage errorMessage = ErrorMessage.builder()
-                    .timestamp(System.currentTimeMillis())
-                    .operation("Start")
-                    .message(e.getMessage())
-                    .build();
-            errorMessageRepository.save(errorMessage);
-
+            writeErrorToDb("start", e, machine.getId());
             throw e;
         }
     }
@@ -181,13 +171,7 @@ public class MachineService {
             }
         } catch (Exception e) {
             if (retryCount == 2) {
-                ErrorMessage errorMessage = ErrorMessage.builder()
-                        .timestamp(System.currentTimeMillis())
-                        .operation("Start async")
-                        .message(e.getMessage())
-                        .build();
-                errorMessageRepository.save(errorMessage);
-
+                writeErrorToDb("start async", e, machine.getId());
                 throw e;
             }
 
@@ -197,31 +181,34 @@ public class MachineService {
         }
     }
 
-    @Transactional
     public ResponseEntity<?> stop(long machineId, long scheduledTimestamp) {
         Machine machine = machineRepository.findMachineByIdAndActive(machineId, true);
 
         try {
             if (machine != null) {
                 if (machine.isAvailable()) {
+                    if (machine.getStatus().equals(RUNNING)) {
 
-                    machine.setAvailable(false);
+                        machine.setAvailable(false);
 
-                    LocalDateTime scheduledDateTime = new Timestamp(scheduledTimestamp).toLocalDateTime();
+                        LocalDateTime scheduledDateTime = new Timestamp(scheduledTimestamp).toLocalDateTime();
 
-                    ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-                    taskScheduler = new ConcurrentTaskScheduler(localExecutor);
+                        ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
+                        taskScheduler = new ConcurrentTaskScheduler(localExecutor);
 
-                    taskScheduler.schedule(() -> {
-                                try {
-                                    stopAsync(machine, 0);
-                                } catch (InterruptedException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            },
-                            Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
+                        taskScheduler.schedule(() -> {
+                                    try {
+                                        stopAsync(machine, 0);
+                                    } catch (InterruptedException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                },
+                                Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
 
-                    return ResponseEntity.ok("Machine stopped");
+                        return ResponseEntity.ok("Machine stopped");
+                    } else {
+                        throw new MachineAlreadyStoppedException();
+                    }
                 } else {
                     throw new MachineNotAvailableException();
                 }
@@ -229,13 +216,7 @@ public class MachineService {
                 throw new MachineNotExistsException();
             }
         } catch (Exception e) {
-            ErrorMessage errorMessage = ErrorMessage.builder()
-                    .timestamp(System.currentTimeMillis())
-                    .operation("Stop")
-                    .message(e.getMessage())
-                    .build();
-            errorMessageRepository.save(errorMessage);
-
+            writeErrorToDb("stop", e, machine.getId());
             throw e;
         }
     }
@@ -253,17 +234,11 @@ public class MachineService {
                 machine.setAvailable(true);
                 machineRepository.saveAndFlush(machine);
             } else {
-                throw new MachineAlreadyRunningException();
+                throw new MachineAlreadyStoppedException();
             }
         } catch (Exception e) {
             if (retryCount == 2) {
-                ErrorMessage errorMessage = ErrorMessage.builder()
-                        .timestamp(System.currentTimeMillis())
-                        .operation("Stop async")
-                        .message(e.getMessage())
-                        .build();
-                errorMessageRepository.save(errorMessage);
-
+                writeErrorToDb("stop async", e, machine.getId());
                 throw e;
             }
 
@@ -273,31 +248,34 @@ public class MachineService {
         }
     }
 
-    @Transactional
     public ResponseEntity<?> restart(long machineId, long scheduledTimestamp) {
         Machine machine = machineRepository.findMachineByIdAndActive(machineId, true);
 
         try {
             if (machine != null) {
                 if (machine.isAvailable()) {
+                    if (machine.getStatus().equals(RUNNING)) {
 
-                    machine.setAvailable(false);
+                        machine.setAvailable(false);
 
-                    LocalDateTime scheduledDateTime = new Timestamp(scheduledTimestamp).toLocalDateTime();
+                        LocalDateTime scheduledDateTime = new Timestamp(scheduledTimestamp).toLocalDateTime();
 
-                    ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-                    taskScheduler = new ConcurrentTaskScheduler(localExecutor);
+                        ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
+                        taskScheduler = new ConcurrentTaskScheduler(localExecutor);
 
-                    taskScheduler.schedule(() -> {
-                                try {
-                                    restartAsync(machine, 0);
-                                } catch (InterruptedException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            },
-                            Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
+                        taskScheduler.schedule(() -> {
+                                    try {
+                                        restartAsync(machine, 0);
+                                    } catch (InterruptedException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                },
+                                Date.from(scheduledDateTime.atZone(ZoneId.systemDefault()).toInstant()));
 
-                    return ResponseEntity.ok("Machine restarted");
+                        return ResponseEntity.ok("Machine restarted");
+                    } else {
+                        throw new MachineAlreadyStoppedException();
+                    }
                 } else {
                     throw new MachineNotAvailableException();
                 }
@@ -305,13 +283,7 @@ public class MachineService {
                 throw new MachineNotExistsException();
             }
         } catch (Exception e) {
-            ErrorMessage errorMessage = ErrorMessage.builder()
-                    .timestamp(System.currentTimeMillis())
-                    .operation("Restart")
-                    .message(e.getMessage())
-                    .build();
-            errorMessageRepository.save(errorMessage);
-
+            writeErrorToDb("restart", e, machine.getId());
             throw e;
         }
     }
@@ -322,27 +294,18 @@ public class MachineService {
         }
 
         try {
-            if (machine.getStatus().equals(RUNNING)) {
-                Thread.sleep(5000);
-                machine.setStatus(STOPPED);
-                machineRepository.saveAndFlush(machine);
+            Thread.sleep(5000);
+            machine.setStatus(STOPPED);
+            machineRepository.saveAndFlush(machine);
 
-                Thread.sleep(5000);
-                machine.setStatus(RUNNING);
-                machine.setAvailable(true);
-                machineRepository.saveAndFlush(machine);
-            } else {
-                throw new MachineAlreadyRunningException();
-            }
+            Thread.sleep(5000);
+            machine.setStatus(RUNNING);
+            machine.setAvailable(true);
+            machineRepository.saveAndFlush(machine);
+
         } catch (Exception e) {
             if (retryCount == 2) {
-                ErrorMessage errorMessage = ErrorMessage.builder()
-                        .timestamp(System.currentTimeMillis())
-                        .operation("Restart async")
-                        .message(e.getMessage())
-                        .build();
-                errorMessageRepository.save(errorMessage);
-
+                writeErrorToDb("restart async", e, machine.getId());
                 throw e;
             }
 
@@ -350,6 +313,16 @@ public class MachineService {
             Thread.sleep(1000);
             restartAsync(machine, ++retryCount);
         }
+    }
+
+    public void writeErrorToDb(String operation, Exception e, long machineId) {
+        ErrorMessage errorMessage = ErrorMessage.builder()
+                .timestamp(System.currentTimeMillis())
+                .operation(operation)
+                .message(e.getMessage())
+                .machineId(machineId)
+                .build();
+        errorMessageRepository.save(errorMessage);
     }
 
 }
